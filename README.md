@@ -1,6 +1,6 @@
 # Puppet_bootstrap.py
 
-Get's Puppet up and running for provisioning stand-alone systems (environments without a puppet-master). 
+Gets Puppet up and running for provisioning stand-alone systems (environments without a puppet-master). 
 
 Can Install puppet client, point to the correct location for modules and hiera config, and kick-off an initial run.
 
@@ -19,7 +19,7 @@ packages are installed.
                    form <varname>:<varvalue>.
   -m, --modulepath= set modulepath parameter in /etc/puppet/puppet.conf
   -p, --hierapath=  set hiera_config parameter in /etc/puppet/puppet.conf
-<pre>
+</pre>
 
  Examples:
   puppet_bootstrap.py -a /etc/puppet/webserver.pp -f "fqdn:serv.example.com"
