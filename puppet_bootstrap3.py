@@ -1,8 +1,8 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import platform
 from subprocess import call
-import urllib
+import urllib.request
 import os
 import time
 import shutil
@@ -37,7 +37,7 @@ packages are installed.
   puppet_bootstrap.py -m /etc/puppet/modules -p /etc/hiera.yaml
     # Installs packages and sets modulepath and hiera_config in puppet.conf
 '''
-  print help_string
+  print(help_string)
 
     
  
@@ -50,7 +50,7 @@ def process_opts():
   try:
     opts, args = getopt.getopt(sys.argv[1:], "ha:f:m:p:", ["help", "apply=", "factervar=", "modulepath=", "hierapath="])
   except getopt.GetoptError as err:
-    print str(err)
+    print(str(err))
     usage()
     exit(1)
   
@@ -90,10 +90,10 @@ def process_opts():
 Downlaods the puppetlabs repo debian package and installs  
 '''
 def deb_config(repo_url):
-  print "configuring for ubuntu/debian..."
+  print("configuring for ubuntu/debian...")
 
   #download the deb
-  urllib.urlretrieve(repo_url, "/tmp/puppetlabs-release.deb")
+  urllib.request.urlretrieve(repo_url, "/tmp/puppetlabs-release.deb")
   
   #wait a bit for file to download...
   #todo I should probably do something smarter (without a race condition) here...
@@ -112,7 +112,7 @@ def deb_config(repo_url):
 Installs puppetlabs yum repo via rpm url
 '''
 def rh_config(repo_url):
-  print "configuring for redhat/centos..."
+  print("configuring for redhat/centos...")
   call(["rpm", "-ivh", repo_url])
   call(["yum", "-y", "install", "puppet", "facter"])
   
@@ -168,7 +168,7 @@ get_dist_url iterates through all possible distros and returns the url to the
 repo installation package.
 '''
 def get_dist_url(dist):
-  print "setting the repository..."
+  print("setting the repository...")
   return{
          'Ubuntu10.04_32bit': 'http://apt.puppetlabs.com/puppetlabs-release-lucid.deb',
          'Ubuntu10.04_64bit': 'http://apt.puppetlabs.com/puppetlabs-release-lucid.deb',
@@ -180,8 +180,9 @@ def get_dist_url(dist):
          'Ubuntu13.04_64bit': 'http://apt.puppetlabs.com/puppetlabs-release-raring.deb',
          'Ubuntu13.10_32bit': 'http://apt.puppetlabs.com/puppetlabs-release-saucy.deb',
          'Ubuntu13.10_64bit': 'http://apt.puppetlabs.com/puppetlabs-release-saucy.deb',
-         'Ubuntu14.04_32bit': 'http://apt.puppetlabs.com/puppetlabs-release-pc1-trusty.deb',
-         'Ubuntu14.04_64bit': 'http://apt.puppetlabs.com/puppetlabs-release-pc1-trusty.deb',
+         'Ubuntu14.04_32bit': 'http://apt.puppetlabs.com/puppetlabs-release-trusty.deb',
+         'Ubuntu14.04_64bit': 'http://apt.puppetlabs.com/puppetlabs-release-trusty.deb',         'Ubuntu14.04_32bit': 'http://apt.puppetlabs.com/puppetlabs-release-trusty.deb',
+         'Ubuntu16.04_32bit': 'http://apt.puppetlabs.com/puppetlabs-release-pc1-xenial.deb',         'Ubuntu14.04_32bit': 'http://apt.puppetlabs.com/puppetlabs-release-trusty.deb',
          'Ubuntu16.04_64bit': 'http://apt.puppetlabs.com/puppetlabs-release-pc1-xenial.deb',
          'redhat5_32bit': 'https://yum.puppetlabs.com/el/5/products/i386/puppetlabs-release-5-7.noarch.rpm',
          'redhat5_64bit': 'https://yum.puppetlabs.com/el/5/products/x86_64/puppetlabs-release-5-7.noarch.rpm',
@@ -191,7 +192,7 @@ def get_dist_url(dist):
          'centos5_64bit': 'https://yum.puppetlabs.com/el/5/products/x86_64/puppetlabs-release-5-7.noarch.rpm',
          'centos6_32bit': 'https://yum.puppetlabs.com/el/6/products/i386/puppetlabs-release-6-7.noarch.rpm',
          'centos6_64bit': 'https://yum.puppetlabs.com/el/6/products/x86_64/puppetlabs-release-6-7.noarch.rpm',
-         'centos7_64bit': 'https://yum.puppetlabs.com/puppetlabs-release-pc1-el-7.noarch.rpm',
+         'centos7_64bit': 'https://yum.puppetlabs.com/el/7/products/x86_64/puppetlabs-release-7-11.noarch.rpm',
          }[dist]
 
 
@@ -221,11 +222,11 @@ function to edit puppet.conf config
 '''
 def edit_puppet_conf():
   
-  import ConfigParser
+  import configparser
   
   puppet_conf_loc = "/etc/puppet/puppet.conf"
   
-  puppet_config = ConfigParser.ConfigParser()
+  puppet_config = configparser.ConfigParser()
   puppet_config.readfp(open(puppet_conf_loc))
   
   if module_path:
@@ -236,7 +237,7 @@ def edit_puppet_conf():
     
   puppet_config.remove_option("main", "templatedir")
     
-  puppet_config.write(open(puppet_conf_loc, "wb"))
+  puppet_config.write(open(puppet_conf_loc, "w"))
   
 
 
@@ -251,7 +252,7 @@ def sanitize_puppet_conf():
   try:
     orig_conf = open(puppet_conf_loc, "r")
   except IOError:
-    print "Couldn't open " + puppet_conf_loc
+    print("Couldn't open " + puppet_conf_loc)
     return 1
   
   new_conf_loc = puppet_conf_loc + ".tmp"
@@ -286,12 +287,6 @@ def main():
   elif is_rh(dist):
     rh_config(repo_url)
     
-        
-  if should_puppet_config:
-    sanitize_puppet_conf()
-    #edit_puppet_conf()
-  
-  
   if factervar:
     varname = get_facter_varname(factervar)
     varvalue = get_facter_varvalue(factervar)
