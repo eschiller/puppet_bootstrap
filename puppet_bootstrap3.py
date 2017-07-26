@@ -26,26 +26,26 @@ packages are installed.
   -a, --apply=      apply the specified manifest file after installing packages
   -f, --factervar=  create the specified variable in facter. Should be in the
                    form <varname>:<varvalue>.
-  -m, --modulepath= set modulepath parameter in /etc/puppet/puppet.conf
-  -p, --hierapath=  set hiera_config parameter in /etc/puppet/puppet.conf
+  -m, --modulepath= set modulepath parameter in /etc/puppetlabs/puppet/puppet.conf
+  -p, --hierapath=  set hiera_config parameter in /etc/puppetlabs/puppet/puppet.conf
 
  Examples:
-  puppet_bootstrap.py -a /etc/puppet/webserver.pp -f "fqdn:serv.example.com"
+  puppet_bootstrap.py -a /etc/puppetlabs/puppet/webserver.pp -f "fqdn:serv.example.com"
     # Will install packages, set the fqdn facter variable to
-      myserver.example.com, then will apply /etc/puppet/webserver.pp
-      
-  puppet_bootstrap.py -m /etc/puppet/modules -p /etc/hiera.yaml
+      myserver.example.com, then will apply /etc/puppetlabs/puppet/webserver.pp
+
+  puppet_bootstrap.py -m /etc/puppetlabs/puppet/modules -p /etc/hiera.yaml
     # Installs packages and sets modulepath and hiera_config in puppet.conf
 '''
   print(help_string)
 
-    
- 
+
+
 '''
 Processes command line options via getopt.
 
 Exits with error (1) on failure.
-'''   
+'''
 def process_opts():
   try:
     opts, args = getopt.getopt(sys.argv[1:], "ha:f:m:p:", ["help", "apply=", "factervar=", "modulepath=", "hierapath="])
@@ -53,21 +53,21 @@ def process_opts():
     print(str(err))
     usage()
     exit(1)
-  
+
   #Globals! Generally just the variables controlled by command line args
   global manifest_to_apply
   global factervar
   global should_puppet_config
   global hiera_path
   global module_path
-  
+
   #default values of variables
   manifest_to_apply = ""
   factervar = ""
   should_puppet_config = False
   module_path = ""
   hiera_path = ""
-  
+
   for o, a in opts:
     if o in ("-h", "--help"):
       usage()
@@ -82,32 +82,32 @@ def process_opts():
     elif o in ("-p", "--heirapath"):
       should_puppet_config = True
       hiera_path = a
-      
-    
-    
-    
+
+
+
+
 '''
-Downlaods the puppetlabs repo debian package and installs  
+Downlaods the puppetlabs repo debian package and installs
 '''
 def deb_config(repo_url):
   print("configuring for ubuntu/debian...")
 
   #download the deb
   urllib.request.urlretrieve(repo_url, "/tmp/puppetlabs-release.deb")
-  
+
   #wait a bit for file to download...
   #todo I should probably do something smarter (without a race condition) here...
   time.sleep(5)
-  
+
   #install repo
   call(["dpkg", "-i", "/tmp/puppetlabs-release.deb"])
-  
+
   #install puppet
   call(["apt-get", "update"])
   call(["apt-get", "-y", "install", "puppet-agent"])
-  
-  
-  
+
+
+
 '''
 Installs puppetlabs yum repo via rpm url
 '''
@@ -115,8 +115,8 @@ def rh_config(repo_url):
   print("configuring for redhat/centos...")
   call(["rpm", "-ivh", repo_url])
   call(["yum", "-y", "install", "puppet", "facter"])
-  
-  
+
+
 
 '''
 is_deb returns true if the passed distro is a debian based distro, otherwise it
@@ -127,7 +127,7 @@ def is_deb(dist):
     return True
   else:
     return False
-  
+
 
 
 '''
@@ -139,26 +139,26 @@ def is_rh(dist):
     return True
   else:
     return False
-  
+
 
 
 '''
 Returns the distribution in the form <distro><version>_<architecture>. Returns
 minor version for ubuntu, but only major for redhat based distros (the level at
 which we need to pay attention for setting the repo path).
-'''  
+'''
 def get_distribution():
   distTuple = platform.dist()
   distver = distTuple[0] + distTuple[1]
-  
+
   #strip minor version from redhat based distros
   if (re.match(r'centos', distver)) or (re.match(r'redhat', distver)):
     distver = re.sub(r'\.\d+', '', distver)
-    
+
   #tack on architecture
   arch = platform.architecture()
   distver = distver + "_" + arch[0]
-  
+
   return distver
 
 
@@ -205,8 +205,8 @@ def get_facter_varname(var):
   varname = re.sub(r'\:.+', '', var)
   varname = "FACTER_" + varname
   return varname
-  
-  
+
+
 
 '''
 util function to remove anything before ':' in a string
@@ -221,62 +221,62 @@ def get_facter_varvalue(var):
 function to edit puppet.conf config
 '''
 def edit_puppet_conf():
-  
+
   import configparser
-  
-  puppet_conf_loc = "/etc/puppet/puppet.conf"
-  
+
+  puppet_conf_loc = "/etc/puppetlabs/puppet/puppet.conf"
+
   puppet_config = configparser.ConfigParser()
   puppet_config.readfp(open(puppet_conf_loc))
-  
+
   if module_path:
     puppet_config.set("main", "basemodulepath", module_path)
-    
+
   if hiera_path:
     puppet_config.set("main", "hiera_config", hiera_path)
-    
+
   puppet_config.remove_option("main", "templatedir")
-    
+
   puppet_config.write(open(puppet_conf_loc, "w"))
-  
+
 
 
 '''
 ConfigParser doesn't appear to handle whitespace very well. This function will
-remove leading and trailing whitespace from /etc/puppet/puppet.conf, allowing
+remove leading and trailing whitespace from /etc/puppetlabs/puppet/puppet.conf, allowing
 edits to the file via ConfigParser
 '''
 def sanitize_puppet_conf():
   #attempt to open puppet.conf for reading, then open new file for writing
-  puppet_conf_loc = "/etc/puppet/puppet.conf"
+  puppet_conf_loc = "/etc/puppetlabs/puppet/puppet.conf"
   try:
     orig_conf = open(puppet_conf_loc, "r")
   except IOError:
     print("Couldn't open " + puppet_conf_loc)
     return 1
-  
+
   new_conf_loc = puppet_conf_loc + ".tmp"
   new_conf = open(new_conf_loc, "w")
-  
-  
+
+
   #iterate through lines of puppet.conf stripping whitespace (but re-append \n)
   for line in orig_conf.readlines():
     new_conf.write(line.strip() + "\n")
-  
+
   #close, then move over the new conf we craeted
   orig_conf.close()
   new_conf.close()
   os.rename(new_conf_loc, puppet_conf_loc)
-  
-  
-  
+
+
+
 
 '''
 main function!
 '''
 def main():
   process_opts();
-  
+
   #get dist and the url for the dist repo install package
   dist = get_distribution();
   repo_url = get_dist_url(dist);
@@ -286,16 +286,16 @@ def main():
     deb_config(repo_url)
   elif is_rh(dist):
     rh_config(repo_url)
-    
+
   if factervar:
     varname = get_facter_varname(factervar)
     varvalue = get_facter_varvalue(factervar)
     os.environ[varname] = varvalue
-    
-    
+
+
   if manifest_to_apply:
     call(["/opt/puppetlabs/bin/puppet", "apply", "-v", manifest_to_apply, "--modulepath", module_path, "--hiera_config", hiera_path])
 
-                                                                    
+
 if __name__ == '__main__':
   main()
