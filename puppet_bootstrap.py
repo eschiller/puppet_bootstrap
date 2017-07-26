@@ -71,6 +71,8 @@ def process_opts():
   should_puppet_config = False
   module_path = ""
   hiera_path = ""
+  server = ""
+  environment = ""
 
   for o, a in opts:
     if o in ("-h", "--help"):
@@ -91,7 +93,7 @@ def process_opts():
       server = a
     elif o in ("-e", "--environment"):
       should_puppet_config = True
-      environemtn = a
+      environment = a
 
 
 
@@ -237,6 +239,7 @@ def edit_puppet_conf():
 
   puppet_config = ConfigParser.ConfigParser()
   puppet_config.readfp(open(puppet_conf_loc))
+  puppet_config.add_section("main")
 
   if module_path:
     puppet_config.set("main", "basemodulepath", module_path)
@@ -305,7 +308,7 @@ def main():
 
   if should_puppet_config:
     sanitize_puppet_conf()
-    #edit_puppet_conf()
+    edit_puppet_conf()
 
 
   if factervar:
