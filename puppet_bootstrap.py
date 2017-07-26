@@ -239,7 +239,8 @@ def edit_puppet_conf():
 
   puppet_config = ConfigParser.ConfigParser()
   puppet_config.readfp(open(puppet_conf_loc))
-  puppet_config.add_section("main")
+  if not puppet_config.has_section("main"):
+    puppet_config.add_section("main")
 
   if module_path:
     puppet_config.set("main", "basemodulepath", module_path)
