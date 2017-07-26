@@ -50,7 +50,7 @@ Exits with error (1) on failure.
 '''
 def process_opts():
   try:
-    opts, args = getopt.getopt(sys.argv[1:], "ha:f:m:p:", ["help", "apply=", "factervar=", "modulepath=", "hierapath="])
+    opts, args = getopt.getopt(sys.argv[1:], "ha:f:m:p:s:e:", ["help", "apply=", "factervar=", "modulepath=", "hierapath=", "server=", "environment="])
   except getopt.GetoptError as err:
     print str(err)
     usage()
@@ -243,6 +243,12 @@ def edit_puppet_conf():
 
   if hiera_path:
     puppet_config.set("main", "hiera_config", hiera_path)
+
+  if server
+    puppet_config.set("main", "server", server)
+
+  if environment:
+    puppet_config.set("main", "environment", environment)
 
   puppet_config.remove_option("main", "templatedir")
 
