@@ -244,7 +244,7 @@ def edit_puppet_conf():
   if hiera_path:
     puppet_config.set("main", "hiera_config", hiera_path)
 
-  if server
+  if server:
     puppet_config.set("main", "server", server)
 
   if environment:
